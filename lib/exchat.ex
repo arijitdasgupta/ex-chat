@@ -28,11 +28,11 @@ defmodule ExChat do
     end
 
     def start(type, args) do
-        port = case System.get_env("BASE_PATH") do
+        port = case System.get_env("PORT") do
           nil -> Application.get_env(:exchat, :defaultPort)
-          port -> Integer.parse(port)
+          p -> Integer.parse(p)
         end
-        
+
         start(type, args, port)
     end
 
