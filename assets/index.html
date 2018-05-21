@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>exChat | An Elixir experiment</title>
+		<meta property="og:title" content="ex_chat"/>
+    	<meta property="og:type" content="server"/>
+    	<meta property="og:site_name" content="ex_chat"/>
+    	<meta property="fb:admins" content="rivalslayer"/>
+    	<meta property="og:description" content="A self contained chat server running on Erland/Elixir, based on WebSocket."/>
+		<script src="jquery.js"></script>
+		<style type = "text/css">
+			#wrapper{
+				width: 800px;
+				margin-left: auto;
+				margin-right: auto;
+				color: #999;
+				background: #FFF;
+				border-radius: 5px;
+				padding: 40px;
+				padding-bottom: 0px;
+			}
+			#page_title{
+				margin-top: 0px;
+				margin-bottom: 0px;
+				font-family: Rockwell;
+				font-size: 45px;
+			}
+			#page_slogan{
+				font-family: Rockwell;
+				font-size: 20px;
+			}
+			#page_slogan a{
+				color: #333;
+				text-decoration: none;
+				transition: color 0.5s;
+				-o-transition: color 0.5s;
+				-webkit-transition: color 0.5s;
+				-moz-transition: color 0.5s;
+			}
+			#page_slogan a:hover{
+				color: #999;
+			}
+			#user{
+				margin-top: 50px;
+				text-align: center;
+			}
+			#user input{
+				font-family: Rockwell;
+				font-weight: bold;
+				font-size: 25px;
+				color: #BBB;
+			}
+			#chat{	
+				margin-top: 200px;
+			}
+			.page_text{
+				font-size: 20px;
+				font-family: Rockwell;
+				text-align: center;
+			}
+			#chat_input{
+				display: none;
+				font-family: Rockwell;
+				font-weight: bold;
+				font-size: 20px;
+				width: 800px;
+				color: #BBB;
+			}
+			.chat_text{
+				text-align: left;
+				font-family: Rockwell;
+				font-size: 20px;
+				color: #999;
+			}
+			#messages{
+				display: none;
+			}
+			#header{
+				z-index: 10;
+				position: fixed;
+				top: 0px;
+				padding: 0px;
+				background: rgba(255,255,255,0.8);
+				width: 760px;
+			}
+			.mini_text{
+				text-align: left;
+				font-size: 14px;
+				font-family: Rockwell;
+			}
+			#log_in_status{
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<div id = "wrapper">
+			<div id = "header">
+				<h1 id = "page_title">exChat</h1>
+				<h2 id = "page_slogan">exChat | An Elixir/WebSocket experiment</a> | <a href = 'https://github.com/rivalslayer/exchat'>About exChat</a></h2>
+				<h2 id = "page_slogan">Ported from <a href="https://github.com/arijitdasgupta/node_chat">node_chat</a></h2>
+			</div>			
+			<div id = "chat">
+				<div id = "user">
+					<p class = "page_text">Welcome to exChat, you are?</p>
+					<input/>
+				</div>
+				<div id = "messages"></div>
+				<div id = "input"><input id = "chat_input"/></div>
+				<p class = "mini_text" id = "log_in_status"></p>
+			</div>
+		</div>
+		<script>
+			if(!WebSocket){
+				$('#user').add('p').addClass('page_text').text('Your browser does not support WebSocket, you cannot chat!');
+			}
+			var Socket;
+			var username;
+			
+			$('#user input').keypress(function(e){
+				var code = (e.keyCode ? e.keyCode : e.which);
+				if(code == 13){
+					var val = $("#user input").val();
+					username = val;
+					//login routine
+					$('#user').remove();
+					chat_url = window.location.href;
+					chat_url = chat_url.substr(4) + 'ws';
+					chat_url = 'ws' + chat_url; //Configured the chat URL
+					Socket = new WebSocket(chat_url); //opened chat socket
+					
+					Socket.addEventListener('open', function(event){
+						$('#chat_input').show();
+						$('#messages').show();
+						$('#messages').append('<p class = "chat_text">You are logged in! Now introduce yourself!</p>')
+						$('#chat_input').focus();
+						$('#log_in_status').text("Logged in as " + username).show();
+					});
+					
+					Socket.addEventListener('message', function(event){
+							var object = eval('('+event.data+')');
+							var sender = object['sender'];
+							var message = object['message'];
+							var appendable = '<p class = "chat_text">' + sender + ' -- ' + message + '</p>';
+							$('#messages').append(appendable);
+							window.scrollBy(0,200);
+					});
+					
+					Socket.addEventListener('error', function(event){
+						return;
+					});
+				}					
+			});
+			
+			$('#chat_input').keypress(function(e){
+				var code = (e.keyCode ? e.keyCode : e.which);
+				if (code == 13){
+					message = $('#chat_input').val();
+					sender = username;
+					$('#chat_input').val('')
+					json_data = JSON.stringify({'message':message, 'sender':sender});
+					Socket.send(json_data);
+				}
+			});
+		</script>
+	</body>
+</html>
