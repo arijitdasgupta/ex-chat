@@ -21,6 +21,7 @@ defmodule Sockets do
             %{"user" => user} -> # Registers user
                 ChatProcs.setUser(self(), user)
                 Mappers.createAdminMessage("#{user} joined the chat") |> broadcast(:notself)
+                # TODO Add initial message push
             %{"sender" => sender, "message" => message} -> # Sends message to everyone
                 sender = case ChatProcs.getUser(self()) do
                     nil -> sender
@@ -48,6 +49,7 @@ defmodule Sockets do
         :ok
     end
 
+    # TODO modify these to incorporate recent messages
     def broadcast(messageJsonEncoded, :notself) do
         ChatProcs.getAllProcs()
             |> Enum.filter((fn(pid) -> pid != self() end))
