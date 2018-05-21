@@ -9,11 +9,9 @@ defmodule Sockets do
     end
 
     def websocket_init(_type, req, _opts) do
-        state = %{}
-
         ChatProcs.addProc(self())
 
-        {:ok, req, state, @timeout}
+        {:ok, req, %{}, @timeout}
     end
 
     def websocket_handle({:text, message}, req, state) do
@@ -41,7 +39,7 @@ defmodule Sockets do
     end
 
     def websocket_terminate(_reason, _req, _state) do
-        # TODO Send message to everyone saying X left the chat
+        # Decides who is leaving the chat
         user = case ChatProcs.getUser(self()) do
             nil -> "Somebody"
             u -> u

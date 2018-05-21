@@ -51,7 +51,6 @@ defmodule ChatProcs do
 
     def getAllProcs() do
         Agent.get(__MODULE__, fn(d) -> 
-            Logger.info inspect d
             Enum.map(d.processes, (&(&1.pid)))
         end)
     end
