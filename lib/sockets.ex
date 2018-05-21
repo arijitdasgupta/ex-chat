@@ -20,10 +20,10 @@ defmodule Sockets do
         {:ok, messageMap} = Poison.decode(message)
 
         case messageMap do
-            %{"user" => user} -> 
+            %{"user" => user} -> # Registers user
                 ChatProcs.setUser(self(), user)
                 Mappers.createAdminMessage("#{user} joined the chat") |> broadcast(:notself)
-            %{"sender" => sender, "message" => message} -> 
+            %{"sender" => sender, "message" => message} -> # Sends message to everyone
                 Mappers.createMessage(
                     message,
                     case ChatProcs.getUser(self()) do
