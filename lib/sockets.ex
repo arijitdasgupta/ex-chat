@@ -22,13 +22,11 @@ defmodule Sockets do
                 ChatProcs.setUser(self(), user)
                 Mappers.createAdminMessage("#{user} joined the chat") |> broadcast(:notself)
             %{"sender" => sender, "message" => message} -> # Sends message to everyone
-                Mappers.createMessage(
-                    message,
-                    case ChatProcs.getUser(self()) do
-                        nil -> sender
-                        user -> user
-                    end
-                ) |> broadcast()
+                sender = case ChatProcs.getUser(self()) do
+                    nil -> sender
+                    user -> user
+                end
+                Mappers.createMessage(message, sender) |> broadcast()
         end
 
         {:ok, req, state}
