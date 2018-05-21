@@ -1,4 +1,4 @@
-defmodule HttpApp do
+defmodule Http404 do
     use Plug.Router
 
     plug :match

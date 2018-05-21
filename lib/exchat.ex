@@ -2,12 +2,17 @@ defmodule ExChat do
     require Logger
 
     defp dispatch() do
+        basePath = case System.get_env("BASE_PATH") do
+          nil -> Application.get_env(:exchat, :basePath)
+          path -> path
+        end
+
         [
             {:_, [
-              {"/ws", Sockets, []},
-              {"/", :cowboy_static, {:file, "./assets/index.html"}},
-              {"/[...]", :cowboy_static, {:dir, "./assets"}},
-              {:_, Plug.Adapters.Cowboy.Handler, {HttpApp, []}}
+              {"#{basePath}/ws", Sockets, []},
+              {"#{basePath}/", :cowboy_static, {:file, "./assets/index.html"}},
+              {"#{basePath}/[...]", :cowboy_static, {:dir, "./assets"}},
+              {:_, Plug.Adapters.Cowboy.Handler, {Http404, []}}
             ]}
         ]
     end
@@ -23,7 +28,12 @@ defmodule ExChat do
     end
 
     def start(type, args) do
-        start(type, args, Application.get_env(:exchat, :defaultPort))
+        port = case System.get_env("BASE_PATH") do
+          nil -> Application.get_env(:exchat, :defaultPort)
+          port -> Integer.parse(port)
+        end
+        
+        start(type, args, port)
     end
 
     def start(port) do
@@ -31,6 +41,6 @@ defmodule ExChat do
     end
 
     def start do
-        start([], [], Application.get_env(:exchat, :defaultPort))
+        start([], [])
     end
 end

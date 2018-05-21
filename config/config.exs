@@ -30,3 +30,5 @@ use Mix.Config
 #     import_config "#{Mix.env}.exs"
 
 config :exchat, defaultPort: 7000
+
+config :exchat, basePath: "/"
