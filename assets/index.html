@@ -122,6 +122,14 @@
 			}
 			var Socket;
 			var username;
+
+			var createChatJsonData = function(message) {
+				return JSON.stringify({'message':message, 'sender':username});
+			}
+
+			var createRegistrationJsonData = function(username) {
+				return JSON.stringify({'user':username});
+			}
 			
 			$('#user input').keypress(function(e){
 				var code = (e.keyCode ? e.keyCode : e.which);
@@ -141,6 +149,8 @@
 						$('#messages').append('<p class = "chat_text">You are logged in! Now introduce yourself!</p>')
 						$('#chat_input').focus();
 						$('#log_in_status').text("Logged in as " + username).show();
+
+						Socket.send(createRegistrationJsonData(username));
 					});
 					
 					Socket.addEventListener('message', function(event){
@@ -162,10 +172,8 @@
 				var code = (e.keyCode ? e.keyCode : e.which);
 				if (code == 13){
 					message = $('#chat_input').val();
-					sender = username;
 					$('#chat_input').val('')
-					json_data = JSON.stringify({'message':message, 'sender':sender});
-					Socket.send(json_data);
+					Socket.send(createChatJsonData(message));
 				}
 			});
 		</script>

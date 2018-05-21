@@ -13,12 +13,25 @@ defmodule Sockets do
 
         ChatProcs.addProc(self())
 
-        createMessage("Somebody joined the chat") |> broadcast(:notself)
         {:ok, req, state, @timeout}
     end
 
     def websocket_handle({:text, message}, req, state) do
-        broadcast(message)
+        {:ok, messageMap} = Poison.decode(message)
+
+        case messageMap do
+            %{"user" => user} -> 
+                ChatProcs.setUser(self(), user)
+                Mappers.createAdminMessage("#{user} joined the chat") |> broadcast(:notself)
+            %{"sender" => sender, "message" => message} -> 
+                Mappers.createMessage(
+                    message,
+                    case ChatProcs.getUser(self()) do
+                        nil -> sender
+                        user -> user
+                    end
+                ) |> broadcast()
+        end
 
         {:ok, req, state}
     end
@@ -28,34 +41,25 @@ defmodule Sockets do
     end
 
     def websocket_terminate(_reason, _req, _state) do
+        # TODO Send message to everyone saying X left the chat
+        user = case ChatProcs.getUser(self()) do
+            nil -> "Somebody"
+            u -> u
+        end
+        Mappers.createAdminMessage("#{user} left the chat") |> broadcast()
+
         ChatProcs.removeProc(self())
-        createMessage("Somebody left the chat") |> broadcast()
         :ok
     end
 
-    defp broadcast(messageJsonEncoded, :notself) do
+    def broadcast(messageJsonEncoded, :notself) do
         ChatProcs.getAllProcs()
             |> Enum.filter((fn(pid) -> pid != self() end))
-            |> call_broadcast(messageJsonEncoded)
+            |> Broadcast.call_broadcast(messageJsonEncoded)
     end
 
-    defp broadcast(messageJsonEncoded) do
+    def broadcast(messageJsonEncoded) do
         ChatProcs.getAllProcs()
-            |> call_broadcast(messageJsonEncoded)
-    end
-
-    defp createMessage(message) do
-        {:ok, encodedJson} = Poison.encode(%{
-            sender: "admin",
-            message: message
-        })
-
-        encodedJson
-    end
-
-    defp call_broadcast(pids, messageJsonEncoded) do
-        pids |> Enum.each((fn(pid) -> 
-            send(pid, {:broadcast, messageJsonEncoded})
-        end))
+            |> Broadcast.call_broadcast(messageJsonEncoded)
     end
 end
