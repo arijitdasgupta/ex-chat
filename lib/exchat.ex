@@ -18,8 +18,11 @@ defmodule ExChat do
     end
 
     def start(_type, _args, port) do
+        History.start()
         ChatProcs.start()
-        children = [Plug.Adapters.Cowboy.child_spec(:http, HttpApp, [], [
+
+        children = [
+            Plug.Adapters.Cowboy.child_spec(:http, HttpApp, [], [
             port: port,
             dispatch: dispatch()
         ])]

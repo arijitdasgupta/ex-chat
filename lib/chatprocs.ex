@@ -12,7 +12,8 @@ defmodule ChatProcs do
         Agent.update(__MODULE__, fn(d) -> 
             %{processes: d.processes ++ [%{
                 pid: pid,
-                username: nil
+                username: nil,
+                messages: []
             }]}
         end)
     end
@@ -29,16 +30,40 @@ defmodule ChatProcs do
         end)
     end
 
-    def setUser(pid, username) do
-        Agent.update(__MODULE__, fn(d) ->
-            [procObj | _] = Enum.filter(d.processes, (&(&1.pid == pid)))
-            remainingProcs = Enum.filter(d.processes, (&(&1.pid != pid)))
-            totalProcs = remainingProcs ++ [%{
-                pid: procObj.pid,
-                username: username
-            }]
+    defp findAndPluck(pid, dataObj) do
+        [procObj | _] = Enum.filter(dataObj.processes, (&(&1.pid == pid)))
+        remainingProcs = Enum.filter(dataObj.processes, (&(&1.pid != pid)))
 
-            %{processes: totalProcs}
+        {procObj, remainingProcs}
+    end
+
+    defp setProcObjects(pid, cb) do
+        Agent.update(__MODULE__, fn(d) -> 
+            {procObj, remainingProcs} = findAndPluck(pid, d)
+            procObj = cb.(procObj)
+            allProcs = remainingProcs ++ [procObj]
+
+            %{processes: allProcs}
+        end)
+    end
+
+    def addMessage(pid, message) do
+        setProcObjects(pid, fn (procObj) -> 
+            messages = procObj.messages ++ [message]
+            %{procObj | messages: messages}
+        end)
+    end
+
+    def addMessages(pid, messages) do
+        setProcObjects(pid, fn(procObj) ->
+            messages = procObj.messages ++ messages
+            %{procObj | messages: messages}
+        end)
+    end
+
+    def setUser(pid, username) do
+        setProcObjects(pid, fn(procObj) -> 
+            %{procObj | username: username}
         end)
     end
 

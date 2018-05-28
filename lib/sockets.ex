@@ -10,6 +10,7 @@ defmodule Sockets do
 
     def websocket_init(_type, req, _opts) do
         ChatProcs.addProc(self())
+        ChatProcs.addMessages(self(), History.getHistory())
 
         {:ok, req, %{}, @timeout}
     end
